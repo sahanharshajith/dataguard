@@ -1,0 +1,33 @@
+# Environment and secrets
+.env
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Data and runtime files
+*.duckdb
+*.duckdb.wal
+data/warehouse/
+airflow/logs/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+.history/
