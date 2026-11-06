@@ -74,7 +74,7 @@ flowchart LR
 | 1. Requirement analysis | ✅ Done ([docs/requirements.md](docs/requirements.md)) |
 | 2. Architecture and system design | 🔜 Planned |
 | 3. Database design | 🔜 Planned |
-| 4. Infrastructure setup (Docker) | 🔜 Planned |
+| 4. Infrastructure setup (Docker) | 🚧 In Progress |
 | 5. Data engineering (RAW/STAGING/ANALYTICS) | 🔜 Planned |
 | 6. Data quality engine | 🔜 Planned |
 | 7. Observability (freshness, schema, volume, Airflow) | 🔜 Planned |
