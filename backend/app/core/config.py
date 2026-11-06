@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     app_name: str = "DataGuard API"
     app_version: str = "0.1.0"
+    
+    cors_origins: list[str] = ["http://localhost:3000"]
 
     postgres_user: str = "dataguard"
     postgres_password: str

@@ -58,6 +58,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-dataguard}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
+      CORS_ORIGINS: '["http://localhost:${FRONTEND_PORT:-3000}"]'
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -72,6 +73,32 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: dataguard-frontend
+    restart: unless-stopped
+    environment:
+      # The browser (not the container) calls the API, so this is a localhost address.
+      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-8000}
+      # File-change detection is unreliable on Windows bind mounts; polling fixes it.
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app           # live code editing
+      - /app/node_modules         # keep the container's packages, not the (empty) host folder
+      - /app/.next                # keep build cache inside Docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
 
   # One-shot job: migrates Airflow's database and creates the admin login, then exits.
   airflow-init:
