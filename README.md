@@ -74,7 +74,7 @@ flowchart LR
 | 1. Requirement analysis | ✅ Done ([docs/requirements.md](docs/requirements.md)) |
 | 2. Architecture and system design | 🔜 Planned |
 | 3. Database design | 🔜 Planned |
-| 4. Infrastructure setup (Docker) | 🔜 Planned |
+| 4. Infrastructure setup (Docker) | ✅ Done (PostgreSQL, FastAPI, Airflow, Next.js) |
 | 5. Data engineering (RAW/STAGING/ANALYTICS) | 🔜 Planned |
 | 6. Data quality engine | 🔜 Planned |
 | 7. Observability (freshness, schema, volume, Airflow) | 🔜 Planned |
@@ -111,7 +111,18 @@ The demo uses an e-commerce dataset (customers, orders, order_items, products, p
 
 ## Getting started
 
-Setup instructions will be added once the Docker environment is in place (Phase 4).
+Prerequisites: Docker Desktop.
+
+```bash
+cp .env.example .env      # then edit the passwords and the JWT secret
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Dashboard | http://localhost:3000 |
+| API docs | http://localhost:8000/docs |
+| Airflow | http://localhost:8080 |
 
 ## License
 

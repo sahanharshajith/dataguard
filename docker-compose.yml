@@ -1,4 +1,27 @@
-# PostgreSQL + FastAPI backend
+# PostgreSQL + FastAPI backend + Apache Airflow (LocalExecutor).
+
+x-airflow-common: &airflow-common
+  image: apache/airflow:3.3.1
+  restart: unless-stopped
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:?Set AIRFLOW_DB_PASSWORD in your .env file}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET:?Set AIRFLOW_JWT_SECRET in your .env file}
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - airflow-logs:/opt/airflow/logs
+
+x-airflow-depends-on: &airflow-depends-on
+  postgres:
+    condition: service_healthy
+  airflow-init:
+    condition: service_completed_successfully
 
 services:
   postgres:
@@ -6,16 +29,13 @@ services:
     container_name: dataguard-postgres
     restart: unless-stopped
     environment:
-      # Creates the first database + owner (the DataGuard metadata DB).
       POSTGRES_USER: ${POSTGRES_USER:-dataguard}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env file}
       POSTGRES_DB: ${POSTGRES_DB:-dataguard}
-      # Read by docker/postgres/init/01-create-airflow-db.sh (second DB + owner).
       AIRFLOW_DB_NAME: ${AIRFLOW_DB_NAME:-airflow}
       AIRFLOW_DB_USER: ${AIRFLOW_DB_USER:-airflow}
       AIRFLOW_DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:?Set AIRFLOW_DB_PASSWORD in your .env file}
     ports:
-      # Bound to localhost only, so other machines on your network cannot reach it.
       - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -36,14 +56,14 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-dataguard}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env file}
       POSTGRES_DB: ${POSTGRES_DB:-dataguard}
-      POSTGRES_HOST: postgres   # the service name is the hostname inside the Compose network
-      POSTGRES_PORT: "5432"     # the container port, not the host port
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      CORS_ORIGINS: '["http://localhost:${FRONTEND_PORT:-3000}"]'
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
-    # Development mode: auto-reload when you edit files in backend/app.
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
       - ./backend/app:/app/app
@@ -54,5 +74,86 @@ services:
       retries: 5
       start_period: 10s
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: dataguard-frontend
+    restart: unless-stopped
+    environment:
+      # The browser (not the container) calls the API, so this is a localhost address.
+      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-8000}
+      # File-change detection is unreliable on Windows bind mounts; polling fixes it.
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app           # live code editing
+      - /app/node_modules         # keep the container's packages, not the (empty) host folder
+      - /app/.next                # keep build cache inside Docker
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+  # One-shot job: migrates Airflow's database and creates the admin login, then exits.
+  airflow-init:
+    <<: *airflow-common
+    container_name: dataguard-airflow-init
+    restart: "no"
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USER:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:?Set AIRFLOW_ADMIN_PASSWORD in your .env file}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  airflow-api-server:
+    <<: *airflow-common
+    container_name: dataguard-airflow-api-server
+    command: api-server
+    ports:
+      - "127.0.0.1:${AIRFLOW_PORT:-8081}:8080"
+    depends_on: *airflow-depends-on
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: dataguard-airflow-scheduler
+    command: scheduler
+    depends_on: *airflow-depends-on
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    container_name: dataguard-airflow-dag-processor
+    command: dag-processor
+    depends_on: *airflow-depends-on
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+
 volumes:
   pgdata:
+  airflow-logs:
