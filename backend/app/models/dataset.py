@@ -69,7 +69,7 @@ class DatasetMonitoringConfig(Base):
     )
 
     dataset_id: Mapped[int] = mapped_column(
-        ForeignKey("datasets.id", ondelete="CASCADE"), primary_key=True
+        BigInteger, ForeignKey("datasets.id", ondelete="CASCADE"), primary_key=True
     )
     expected_refresh_minutes: Mapped[int] = mapped_column(server_default=text("1440"))
     freshness_threshold_minutes: Mapped[int] = mapped_column(server_default=text("2880"))
