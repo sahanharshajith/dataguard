@@ -247,6 +247,8 @@ Unique: (`pipeline_run_id`, `task_id`). Retry count = `try_number - 1`. Airflow 
 Constraints:
 - `CHECK (dataset_id IS NOT NULL OR pipeline_id IS NOT NULL)`: every alert points at something.
 - Partial unique index: `UNIQUE (dedup_key) WHERE status <> 'resolved'`.
+- `CHECK ((status = 'resolved') = (resolved_at IS NOT NULL))`: `resolved_at` is set exactly when the alert is resolved.
+- `CHECK (status <> 'acknowledged' OR acknowledged_at IS NOT NULL)`: an acknowledged alert has an acknowledgement time.
 
 Deduplication: while an alert is open or acknowledged, a repeat of the same problem cannot insert a second row. The service increments `occurrence_count` and `last_detected_at` and appends an `occurrence` event. After resolution, the same problem later creates a new alert.
 
