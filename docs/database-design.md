@@ -278,14 +278,15 @@ Everything else is in third normal form. Three places copy data on purpose so hi
 
 - Index on every foreign key column.
 - Time-series indexes for "latest N for this dataset":
-  - `freshness_checks (dataset_id, checked_at DESC)`
-  - `volume_checks (dataset_id, checked_at DESC)`
-  - `quality_validation_runs (dataset_id, started_at DESC)`
-  - `pipeline_runs (pipeline_id, started_at DESC)`
-  - `schema_changes (dataset_id, detected_at DESC)`
+  - `freshness_checks (dataset_id, checked_at)`
+  - `volume_checks (dataset_id, checked_at)`
+  - `quality_validation_runs (dataset_id, started_at)`
+  - `pipeline_runs (pipeline_id, started_at)`
+  - `schema_changes (dataset_id, detected_at)`
 - `alerts (status, severity)` for the Alerts page filters.
 - Partial unique index on `alerts (dedup_key) WHERE status <> 'resolved'`.
 - No JSONB indexes until a real query needs one.
+- PostgreSQL can scan a b-tree index backwards, so these also serve newest-first queries without `DESC` in the index definition.
 
 ## 6. Entity relationship diagram
 
