@@ -36,7 +36,8 @@ class PrimaryKeyMixin:
 
 
 class TimestampMixin:
-    """`created_at` and `updated_at`, maintained by the database clock."""
+    """`created_at` defaults to the database clock; `updated_at` is refreshed by
+    SQLAlchemy whenever the ORM updates a row (not by a database trigger)."""
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), sort_order=1000)
     updated_at: Mapped[datetime] = mapped_column(
