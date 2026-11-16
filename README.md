@@ -3,6 +3,7 @@
 ![Status](https://img.shields.io/badge/status-work%20in%20progress-orange)
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![CI](https://github.com/sahanharshajith/dataguard/actions/workflows/ci.yml/badge.svg)
 
 > **🚧 Work in progress.** DataGuard is an individual portfolio project that I am actively designing and building.
 > The requirements are complete; implementation is starting. See the [status table](#project-status) for what exists today.
@@ -81,7 +82,7 @@ flowchart LR
 | 8. Backend development | 🔜 Planned |
 | 9. Frontend development | 🔜 Planned |
 | 10. Integration and testing | 🔜 Planned |
-| 11. CI/CD and documentation | 🔜 Planned |
+| 11. CI/CD and documentation | 🚧 CI done (11a); CD, final docs and demo come last (11b) |
 | 12. Advanced enhancements | 🔜 Planned |
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for details.
@@ -147,6 +148,8 @@ Design: [docs/database-design.md](docs/database-design.md)
 pip install -r backend/requirements-dev.txt
 pytest        # unit tests run; integration tests are skipped
 ```
+
+See [docs/development.md](docs/development.md) for the Git workflow and everyday commands.
 
 Integration tests run against a real PostgreSQL. They drop and recreate a database whose name
 ends in `_test`, apply the real migrations, and roll back after every test. The port is the
