@@ -73,7 +73,7 @@ flowchart LR
 |-------|--------|
 | 1. Requirement analysis | ✅ Done ([docs/requirements.md](docs/requirements.md)) |
 | 2. Architecture and system design | 🔜 Planned |
-| 3. Database design | 🚧 In progress ([design](docs/database-design.md)) |
+| 3. Database design | ✅ Done (15 tables, Alembic migrations, 80 tests) ([design](docs/database-design.md)) | |
 | 4. Infrastructure setup (Docker) | ✅ Done (PostgreSQL, FastAPI, Airflow, Next.js) |
 | 5. Data engineering (RAW/STAGING/ANALYTICS) | 🔜 Planned |
 | 6. Data quality engine | 🔜 Planned |
@@ -123,6 +123,39 @@ docker compose up --build
 | Dashboard | http://localhost:3000 |
 | API docs | http://localhost:8000/docs |
 | Airflow | http://localhost:8080 |
+
+## Database
+
+The schema is managed with Alembic migrations (`backend/migrations/`). With the stack running:
+
+```bash
+docker compose exec backend alembic upgrade head   # apply all migrations
+docker compose exec backend alembic current        # show the applied revision
+```
+
+After changing a model, generate a migration and **review it before applying**:
+
+```bash
+docker compose exec backend alembic revision --autogenerate -m "describe the change"
+```
+
+Design: [docs/database-design.md](docs/database-design.md)
+
+## Tests
+
+```bash
+pip install -r backend/requirements-dev.txt
+pytest        # unit tests run; integration tests are skipped
+```
+
+Integration tests run against a real PostgreSQL. They drop and recreate a database whose name
+ends in `_test`, apply the real migrations, and roll back after every test. The port is the
+`POSTGRES_HOST_PORT` from your `.env` (5432 by default):
+
+```powershell
+$env:TEST_DATABASE_URL = "postgresql+psycopg://dataguard:<password>@localhost:5432/dataguard_test?connect_timeout=10"
+pytest
+```
 
 ## License
 
