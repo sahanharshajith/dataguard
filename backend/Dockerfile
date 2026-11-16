@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # No .pyc files; print logs immediately instead of buffering them.
 ENV PYTHONDONTWRITEBYTECODE=1 \
