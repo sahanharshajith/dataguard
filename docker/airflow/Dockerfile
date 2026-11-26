@@ -1,4 +1,4 @@
-FROM apache/airflow:3.3.1
+FROM apache/airflow:3.4.0
 
 USER root
 # Mount points for the shared warehouse volume and the landing zone. They are created here,
