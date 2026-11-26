@@ -76,7 +76,7 @@ flowchart LR
 | 2. Architecture and system design | 🔜 Planned |
 | 3. Database design | ✅ Done (15 tables, Alembic migrations, 80 tests) ([design](docs/database-design.md)) | |
 | 4. Infrastructure setup (Docker) | ✅ Done (PostgreSQL, FastAPI, Airflow, Next.js) |
-| 5. Data engineering (RAW/STAGING/ANALYTICS) | 🔜 Planned |
+| 5. Data engineering (RAW/STAGING/ANALYTICS) | ✅ Done ([docs/pipelines.md](docs/pipelines.md)) |
 | 6. Data quality engine | 🔜 Planned |
 | 7. Observability (freshness, schema, volume, Airflow) | 🔜 Planned |
 | 8. Backend development | 🔜 Planned |

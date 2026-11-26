@@ -20,6 +20,7 @@ updates:
     directories:
       - /backend
       - /frontend
+      - /docker/airflow
     schedule:
       interval: weekly
 

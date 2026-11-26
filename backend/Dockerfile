@@ -15,6 +15,10 @@ COPY app ./app
 COPY alembic.ini ./
 COPY migrations ./migrations
 
+# Mount point for the shared DuckDB warehouse. Owned like the Airflow image's copy (uid 50000)
+# so the shared Docker volume has the same owner whichever container mounts it first.
+RUN mkdir -p /data/warehouse && chown 50000:0 /data/warehouse && chmod 775 /data/warehouse
+
 # Run as a non-root user.
 RUN useradd --create-home appuser
 USER appuser

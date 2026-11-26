@@ -31,3 +31,5 @@ airflow/logs/
 .DS_Store
 
 .history/
+
+data/landing/
